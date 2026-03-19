@@ -1,7 +1,12 @@
 const https = require('https');
-const API_KEY = process.env.CHATWORK_API_KEY;
-console.log('key len:', (API_KEY||'').length);
 const fs = require('fs');
+
+const API_KEY = process.env.CHATWORK_API_KEY;
+if (!API_KEY) {
+  console.error('ERROR: CHATWORK_API_KEY is not set');
+  process.exit(1);
+}
+console.log('API_KEY length:', API_KEY.length);
 
 const ROOMS = {
   'ferret One 検証部屋': '285643264',
@@ -15,14 +20,26 @@ function cw(path) {
     var options = {
       hostname: 'api.chatwork.com',
       path: '/v2' + path,
+      method: 'GET',
       headers: { 'X-ChatWorkToken': API_KEY }
     };
     var req = https.request(options, function(res) {
       var d = '';
       res.on('data', function(chunk) { d += chunk; });
-      res.on('end', function() { try { resolve(JSON.parse(d)); } catch(e) { console.error("parse err:",d.substring(0,80)); resolve([]); } });
+      res.on('end', function() {
+        console.log('  status:', res.statusCode, 'body length:', d.length);
+        try {
+          resolve(JSON.parse(d));
+        } catch(e) {
+          console.error('  JSON parse error, body:', d.substring(0, 100));
+          resolve([]);
+        }
+      });
     });
-    req.on('error', reject);
+    req.on('error', function(e) {
+      console.error('  request error:', e.message);
+      reject(e);
+    });
     req.end();
   });
 }
@@ -36,6 +53,7 @@ async function main() {
   for (var i = 0; i < roomNames.length; i++) {
     var name = roomNames[i];
     var id = ROOMS[name];
+    console.log('Processing room:', name, id);
 
     try {
       var tasks = await cw('/rooms/' + id + '/tasks?status=open');
@@ -56,22 +74,30 @@ async function main() {
     }
 
     try {
-      var msgs = await cw('/rooms/' + id + '/messages?force=1');
+      // Cursor勉強部屋は200件取得して過去のNotionリンクを全部拾う
+      var limit = (id === '402020025') ? 200 : 30;
+      var msgs = await cw('/rooms/' + id + '/messages?force=1&limit=' + limit);
       if (Array.isArray(msgs) && msgs.length > 0) {
-        var recent = msgs.slice(-30);
+        var recent = msgs.slice(-limit);
 
         if (id === '402020025') {
           var links = [];
+          var seenUrls = {};
           for (var k = 0; k < recent.length; k++) {
             var m = recent[k];
-            var matches = m.body.match(/https:\/\/www\.notion\.so\/[^\s)\"]+/g);
+            var matches = m.body.match(/https:\/\/www\.notion\.so\/[^\s)\"<\]]+/g);
             if (matches) {
               for (var l = 0; l < matches.length; l++) {
-                links.push({
-                  url: matches[l],
-                  sender: m.account.name,
-                  date: new Date(m.send_time * 1000).toLocaleDateString('ja-JP')
-                });
+                var url = matches[l].replace(/[.,;]+$/, '');
+                if (!seenUrls[url]) {
+                  seenUrls[url] = true;
+                  links.push({
+                    url: url,
+                    sender: m.account.name,
+                    date: new Date(m.send_time * 1000).toLocaleDateString('ja-JP'),
+                    body: m.body.substring(0, 60).replace(/\n/g, ' ')
+                  });
+                }
               }
             }
           }
@@ -81,9 +107,9 @@ async function main() {
               room: name,
               links: links,
               date: new Date().toLocaleDateString('ja-JP'),
-              title: 'Cursor勉強部屋 学習リンク',
-              body: links.length + '件のNotionリンクが共有されています',
-              tags: ['Notion', '学習']
+              title: 'Cursor勉強部屋 Notionリンク一覧',
+              body: links.length + '件のNotionリンクが見つかりました',
+              tags: ['Notion', '学習', 'Cursor']
             });
           }
         }
