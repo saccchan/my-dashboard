@@ -1,4 +1,6 @@
 const https = require('https');
+const API_KEY = process.env.CHATWORK_API_KEY;
+console.log('key len:', (API_KEY||'').length);
 const fs = require('fs');
 
 const ROOMS = {
@@ -13,12 +15,12 @@ function cw(path) {
     var options = {
       hostname: 'api.chatwork.com',
       path: '/v2' + path,
-      headers: { 'X-ChatWorkToken': process.env.CHATWORK_API_KEY }
+      headers: { 'X-ChatWorkToken': API_KEY }
     };
     var req = https.request(options, function(res) {
       var d = '';
       res.on('data', function(chunk) { d += chunk; });
-      res.on('end', function() { resolve(JSON.parse(d)); });
+      res.on('end', function() { try { resolve(JSON.parse(d)); } catch(e) { console.error("parse err:",d.substring(0,80)); resolve([]); } });
     });
     req.on('error', reject);
     req.end();
