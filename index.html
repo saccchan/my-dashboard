@@ -746,7 +746,16 @@ function drop(targetId){
   state.learns.splice(to,0,item);
   dragId=null;save();renderLearns();
 }
-
+// Chatwork自動更新データを反映
+if (window.CW_TODOS && window.CW_TODOS.length > 0) {
+  state.todos = window.CW_TODOS;
+}
+if (window.CW_THREADS && window.CW_THREADS.length > 0) {
+  state.threads = window.CW_THREADS;
+}
+if (window.CW_MINUTES && window.CW_MINUTES.length > 0) {
+  state.minutes = window.CW_MINUTES;
+}
 render();
 </script>
 </body>
