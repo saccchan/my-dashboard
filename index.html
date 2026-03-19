@@ -3,60 +3,442 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>マイダッシュボード</title>
+<title>✦ マイダッシュボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+:root{
+  --pink:#FFB7C5;--pink-light:#FFF0F3;--pink-mid:#FFD6DE;
+  --mint:#B5EAD7;--mint-light:#F0FBF7;--mint-dark:#2DB37A;
+  --lemon:#FFF3B0;--lemon-dark:#C8A600;
+  --lavender:#E2D9F3;--lavender-dark:#7C5CBF;
+  --peach:#FFD8B1;--peach-dark:#E07A30;
+  --sky:#C9E8FF;--sky-dark:#2B7FC1;
+  --text:#3a2e3e;--text-muted:#9b8fa8;--text-light:#c4b8cc;
+  --bg:#FDF8FF;--card:#fff;
+  --radius:16px;--radius-sm:10px;
+  --shadow:0 2px 12px rgba(180,140,200,.10);
+  --shadow-hover:0 6px 24px rgba(180,140,200,.18);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh}
-header{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:14px 24px;font-size:16px;font-weight:500}
-.dashboard{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px;max-width:1200px;margin:0 auto}
-@media(max-width:700px){.dashboard{grid-template-columns:1fr}}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.section-title{font-size:15px;font-weight:500}
-.add-btn{font-size:12px;padding:4px 12px;cursor:pointer;border-radius:8px;border:0.5px solid #ccc;background:transparent;color:#555}
-.add-btn:hover{background:#f0f0f0}
-.category-block{margin-bottom:18px}
-.cat-label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.cat-edit-btn{font-size:10px;padding:2px 6px;cursor:pointer;border-radius:4px;border:0.5px solid #ddd;background:transparent;color:#aaa}
-.cat-edit-btn:hover{background:#f0f0f0}
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
-.tool-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:8px;padding:10px 12px;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px}
-.tool-card:hover{border-color:#bbb}
-.tool-card-name{font-size:13px;font-weight:500}
-.tool-card-url{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-actions{display:none;position:absolute;top:4px;right:4px;gap:4px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;cursor:default}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(circle at 15% 15%,#FFE4ED 0%,transparent 40%),
+  radial-gradient(circle at 85% 10%,#E8F4FF 0%,transparent 35%),
+  radial-gradient(circle at 80% 85%,#E8FBF3 0%,transparent 40%),
+  radial-gradient(circle at 20% 90%,#F3EEFF 0%,transparent 35%);
+  pointer-events:none;z-index:0}
+
+/* ── HEADER ── */
+header{
+  position:relative;z-index:10;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1.5px solid var(--pink-mid);
+  padding:0 28px;height:62px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--pink) 0%,var(--lavender) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;box-shadow:0 2px 8px rgba(255,120,160,.25)
+}
+.logo-text{font-family:'Zen Maru Gothic',sans-serif;font-size:17px;font-weight:700;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--text-muted);font-weight:500;margin-left:2px}
+.header-right{display:flex;align-items:center;gap:10px}
+.greeting{font-size:12px;color:var(--text-muted);font-weight:600}
+.refresh-btn{
+  font-size:12px;padding:6px 14px;cursor:pointer;
+  border-radius:20px;border:1.5px solid var(--pink-mid);
+  background:var(--pink-light);color:#c05070;font-weight:700;
+  font-family:'Nunito',sans-serif;transition:all .2s;display:flex;align-items:center;gap:5px
+}
+.refresh-btn:hover{background:var(--pink-mid);transform:scale(1.03)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ddd;transition:background .4s}
+.refresh-btn.synced .sync-dot{background:#2DB37A;box-shadow:0 0 6px #2DB37A80}
+
+/* ── LAYOUT ── */
+.page{position:relative;z-index:1;padding:28px;max-width:1240px;margin:0 auto}
+.row{display:grid;gap:20px;margin-bottom:20px}
+.row-2{grid-template-columns:1fr 1fr}
+.row-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:900px){.row-2,.row-3{grid-template-columns:1fr}}
+
+/* ── SECTION CARD ── */
+.section{
+  background:var(--card);border-radius:var(--radius);
+  border:1.5px solid #F0E8F8;
+  box-shadow:var(--shadow);
+  padding:20px;
+  animation:fadeUp .5s ease both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.section:nth-child(1){animation-delay:.05s}
+.section:nth-child(2){animation-delay:.10s}
+.section:nth-child(3){animation-delay:.15s}
+.section:nth-child(4){animation-delay:.20s}
+.section:nth-child(5){animation-delay:.25s}
+
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title-wrap{display:flex;align-items:center;gap:8px}
+.sec-icon{
+  width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0
+}
+.sec-title{font-size:14px;font-weight:800;color:var(--text)}
+.sec-sub{font-size:11px;color:var(--text-muted);font-weight:500;margin-top:1px}
+.add-btn{
+  font-size:11px;padding:4px 11px;cursor:pointer;
+  border-radius:20px;border:1.5px solid #e8dff0;
+  background:transparent;color:var(--text-muted);
+  font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s
+}
+.add-btn:hover{background:#f7f0ff;border-color:#c9b0e8;color:var(--lavender-dark)}
+
+/* ── CATEGORY LABEL ── */
+.cat-block{margin-bottom:16px}
+.cat-label{
+  font-size:10px;font-weight:800;color:var(--text-light);
+  text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:8px;display:flex;align-items:center;gap:6px
+}
+.cat-label::before{content:'';display:inline-block;width:12px;height:2px;border-radius:2px;background:currentColor}
+.cat-edit-btn{
+  font-size:9px;padding:2px 6px;cursor:pointer;
+  border-radius:4px;border:0.5px solid #ede6f5;
+  background:transparent;color:var(--text-light);
+  font-family:'Nunito',sans-serif
+}
+.cat-edit-btn:hover{background:#f5f0ff;color:var(--lavender-dark)}
+
+/* ── TOOL CARDS ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.tool-card{
+  background:#fdfaff;border:1.5px solid #EDE6F5;border-radius:var(--radius-sm);
+  padding:10px 11px;cursor:pointer;position:relative;
+  transition:all .2s;display:flex;flex-direction:column;gap:3px
+}
+.tool-card:hover{border-color:var(--pink);box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.tool-card-name{font-size:12px;font-weight:700;color:var(--text)}
+.tool-card-url{font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-actions{display:none;position:absolute;top:4px;right:4px;gap:3px}
 .tool-card:hover .card-actions{display:flex}
-.action-btn{font-size:10px;padding:2px 5px;cursor:pointer;border-radius:4px;border:0.5px solid #ddd;background:#fff;color:#666}
-.action-btn:hover{background:#f0f0f0}
-.learn-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:grab}
-.learn-card:hover{border-color:#bbb}
-.learn-card.drag-over{border-color:#378ADD}
-.learn-card-top{display:flex;align-items:flex-start;gap:8px}
-.status-toggle{width:16px;height:16px;border-radius:50%;border:1.5px solid #ccc;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center}
-.status-toggle.watched{background:#1D9E75;border-color:#1D9E75}
-.status-toggle.watched::after{content:'';display:block;width:5px;height:8px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
+.action-btn{
+  font-size:9px;padding:2px 5px;cursor:pointer;
+  border-radius:5px;border:0.5px solid #ede6f5;
+  background:#fff;color:#9b8fa8;font-family:'Nunito',sans-serif
+}
+.action-btn:hover{background:#f5f0ff;color:var(--lavender-dark)}
+
+/* ── LEARN CARDS ── */
+.learn-card{
+  background:#fdfaff;border:1.5px solid #EDE6F5;border-radius:var(--radius-sm);
+  padding:10px 12px;margin-bottom:8px;cursor:grab;transition:all .2s
+}
+.learn-card:hover{border-color:#C9B0E8;box-shadow:var(--shadow-hover)}
+.learn-card.drag-over{border-color:var(--sky-dark);background:var(--sky)}
+.learn-card-top{display:flex;align-items:flex-start;gap:9px}
+.status-toggle{
+  width:18px;height:18px;border-radius:50%;border:2px solid #ddd;
+  cursor:pointer;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s
+}
+.status-toggle.watched{background:var(--mint-dark);border-color:var(--mint-dark)}
+.status-toggle.watched::after{content:'✓';color:#fff;font-size:10px;font-weight:800;line-height:1}
 .learn-card-info{flex:1;min-width:0}
-.learn-card-title{font-size:13px;font-weight:500}
-.learn-card-url{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.learn-badge{font-size:10px;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:4px}
-.badge-watched{background:#E1F5EE;color:#0F6E56}
-.badge-unwatched{background:#f1efe8;color:#666}
-.lc-actions{display:flex;gap:4px;flex-shrink:0}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:100}
+.learn-card-title{font-size:12px;font-weight:700;line-height:1.4}
+.learn-card-url{font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.learn-badge{
+  font-size:9px;font-weight:800;padding:2px 8px;
+  border-radius:10px;display:inline-block;margin-top:4px
+}
+.badge-watched{background:var(--mint-light);color:var(--mint-dark)}
+.badge-unwatched{background:#f5f0ff;color:var(--lavender-dark)}
+.lc-actions{display:flex;gap:3px;flex-shrink:0}
+
+/* ── CHATWORK SECTIONS ── */
+
+/* ToDo */
+.todo-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 12px;border-radius:var(--radius-sm);
+  border:1.5px solid #FFE0E8;background:#FFF8FA;
+  margin-bottom:8px;transition:all .2s;position:relative
+}
+.todo-item:hover{border-color:var(--pink);box-shadow:0 3px 12px rgba(255,100,140,.10)}
+.todo-check{
+  width:18px;height:18px;border-radius:50%;border:2px solid var(--pink);
+  cursor:pointer;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;background:#fff
+}
+.todo-check:hover{background:var(--pink-light)}
+.todo-check.done{background:var(--pink);border-color:var(--pink)}
+.todo-check.done::after{content:'✓';color:#fff;font-size:10px;font-weight:800;line-height:1}
+.todo-content{flex:1;min-width:0}
+.todo-text{font-size:12px;font-weight:600;line-height:1.4}
+.todo-text.done-text{text-decoration:line-through;opacity:.45}
+.todo-meta{font-size:10px;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;align-items:center}
+.todo-room{
+  font-size:9px;font-weight:800;padding:1px 7px;border-radius:8px;
+  background:var(--pink-mid);color:#b03060;display:inline-block
+}
+.todo-priority{
+  font-size:9px;font-weight:800;padding:1px 7px;border-radius:8px;display:inline-block
+}
+.pri-high{background:#FFE0B2;color:#E65100}
+.pri-normal{background:#E3F2FD;color:#1565C0}
+.todo-del-btn{
+  font-size:9px;padding:2px 6px;cursor:pointer;
+  border-radius:5px;border:0.5px solid #FFD0DB;
+  background:#fff;color:#c06080;font-family:'Nunito',sans-serif;
+  opacity:0;transition:opacity .15s
+}
+.todo-item:hover .todo-del-btn{opacity:1}
+.todo-input-row{display:flex;gap:8px;margin-top:10px}
+.todo-input{
+  flex:1;padding:7px 12px;font-size:12px;
+  border:1.5px solid #FFD0DB;border-radius:20px;
+  background:var(--pink-light);color:var(--text);
+  font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s
+}
+.todo-input:focus{border-color:var(--pink)}
+.todo-add-btn{
+  padding:7px 14px;font-size:12px;cursor:pointer;
+  border-radius:20px;border:none;
+  background:linear-gradient(135deg,var(--pink) 0%,#FF8FAB 100%);
+  color:#fff;font-weight:800;font-family:'Nunito',sans-serif;
+  box-shadow:0 2px 8px rgba(255,100,140,.30);transition:all .2s
+}
+.todo-add-btn:hover{transform:scale(1.04)}
+
+/* 議事録 */
+.minutes-card{
+  background:#F8F9FF;border:1.5px solid #D8E4F8;border-radius:var(--radius-sm);
+  padding:12px 14px;margin-bottom:8px;transition:all .2s
+}
+.minutes-card:hover{border-color:var(--sky-dark);box-shadow:0 3px 12px rgba(43,127,193,.10)}
+.minutes-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.minutes-date{font-size:10px;font-weight:800;color:var(--sky-dark)}
+.minutes-room{
+  font-size:9px;font-weight:800;padding:1px 7px;border-radius:8px;
+  background:var(--sky);color:var(--sky-dark)
+}
+.minutes-title{font-size:12px;font-weight:700;margin-bottom:4px}
+.minutes-body{font-size:11px;color:#5a6a7a;line-height:1.6}
+.minutes-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.minutes-tag{
+  font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;
+  background:#EEF3FF;color:#5570C0
+}
+.notion-btn{
+  font-size:10px;padding:4px 10px;cursor:pointer;
+  border-radius:8px;border:1.5px solid #D8E4F8;
+  background:#fff;color:var(--sky-dark);font-weight:700;
+  font-family:'Nunito',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:4px;margin-top:8px
+}
+.notion-btn:hover{background:var(--sky);border-color:var(--sky-dark)}
+
+/* スレッド概要 */
+.thread-card{
+  background:#FDFAF0;border:1.5px solid #EEE0A8;border-radius:var(--radius-sm);
+  padding:12px 14px;margin-bottom:8px;transition:all .2s
+}
+.thread-card:hover{border-color:var(--lemon-dark);box-shadow:0 3px 12px rgba(200,166,0,.10)}
+.thread-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.thread-room{
+  font-size:10px;font-weight:800;
+  background:var(--lemon);color:var(--lemon-dark);
+  padding:2px 9px;border-radius:8px
+}
+.thread-time{font-size:10px;color:var(--text-muted)}
+.thread-summary{font-size:12px;font-weight:600;margin-bottom:8px;line-height:1.5;color:var(--text)}
+.thread-items{list-style:none;display:flex;flex-direction:column;gap:4px}
+.thread-items li{
+  font-size:11px;color:#5a5070;line-height:1.5;
+  padding-left:14px;position:relative
+}
+.thread-items li::before{
+  content:'';position:absolute;left:0;top:7px;
+  width:5px;height:5px;border-radius:50%;background:var(--lemon-dark)
+}
+.thread-section-label{
+  font-size:10px;font-weight:800;color:var(--lemon-dark);
+  margin:8px 0 4px;text-transform:uppercase;letter-spacing:.05em
+}
+
+/* ── EMPTY STATE ── */
+.empty-state{
+  text-align:center;padding:24px 12px;
+  color:var(--text-light);font-size:12px;font-weight:600
+}
+.empty-icon{font-size:28px;margin-bottom:6px}
+
+/* ── CHATWORK API PANEL ── */
+.cw-setup{
+  background:linear-gradient(135deg,#FFF8FA 0%,#F8F0FF 100%);
+  border:1.5px dashed #E0C8F0;border-radius:var(--radius-sm);
+  padding:16px;text-align:center;margin-bottom:12px
+}
+.cw-setup p{font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;line-height:1.6}
+.cw-input-wrap{display:flex;gap:8px;max-width:400px;margin:0 auto}
+.cw-key-input{
+  flex:1;padding:7px 12px;font-size:12px;
+  border:1.5px solid #E0C8F0;border-radius:20px;
+  background:#fff;font-family:'Nunito',sans-serif;outline:none;
+  color:var(--text)
+}
+.cw-key-input:focus{border-color:var(--lavender-dark)}
+.cw-save-btn{
+  padding:7px 14px;font-size:12px;cursor:pointer;
+  border-radius:20px;border:none;
+  background:linear-gradient(135deg,var(--lavender) 0%,#C9A8E8 100%);
+  color:var(--lavender-dark);font-weight:800;font-family:'Nunito',sans-serif;
+  box-shadow:0 2px 8px rgba(150,100,200,.20);transition:all .2s
+}
+.cw-save-btn:hover{transform:scale(1.04)}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(60,30,80,.30);backdrop-filter:blur(4px);align-items:center;justify-content:center;z-index:100}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;padding:1.25rem;width:320px;max-width:90vw}
-.modal h3{font-size:15px;font-weight:500;margin-bottom:14px}
-.modal label{font-size:12px;color:#666;display:block;margin-bottom:4px;margin-top:10px}
-.modal input,.modal select{width:100%;padding:6px 8px;font-size:13px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
-.modal-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
-.btn-primary{padding:6px 14px;font-size:13px;cursor:pointer;border-radius:8px;border:none;background:#378ADD;color:white}
-.btn-cancel{padding:6px 14px;font-size:13px;cursor:pointer;border-radius:8px;border:0.5px solid #ccc;background:transparent;color:#666}
-.empty{font-size:12px;color:#bbb;padding:8px 0}
+.modal{
+  background:#fff;border-radius:20px;
+  border:1.5px solid #EDE6F5;
+  box-shadow:0 20px 60px rgba(150,100,200,.18);
+  padding:24px;width:340px;max-width:92vw;
+  animation:popIn .25s cubic-bezier(.34,1.56,.64,1) both
+}
+@keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+.modal h3{font-size:15px;font-weight:800;margin-bottom:16px;color:var(--text)}
+.modal label{font-size:11px;color:var(--text-muted);font-weight:700;display:block;margin-bottom:4px;margin-top:12px;text-transform:uppercase;letter-spacing:.04em}
+.modal input,.modal select{
+  width:100%;padding:8px 12px;font-size:13px;
+  border:1.5px solid #EDE6F5;border-radius:10px;
+  background:#fdfaff;color:var(--text);
+  font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s
+}
+.modal input:focus,.modal select:focus{border-color:var(--lavender-dark)}
+.modal-btns{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+.btn-primary{
+  padding:8px 18px;font-size:13px;cursor:pointer;
+  border-radius:20px;border:none;
+  background:linear-gradient(135deg,#C9A8E8 0%,#A070D0 100%);
+  color:#fff;font-weight:800;font-family:'Nunito',sans-serif;
+  box-shadow:0 2px 10px rgba(150,100,200,.30);transition:all .2s
+}
+.btn-primary:hover{transform:scale(1.03)}
+.btn-cancel{
+  padding:8px 18px;font-size:13px;cursor:pointer;
+  border-radius:20px;border:1.5px solid #EDE6F5;
+  background:transparent;color:var(--text-muted);
+  font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s
+}
+.btn-cancel:hover{background:#f5f0ff}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#E0D0F0;border-radius:10px}
 </style>
 </head>
 <body>
-<header>マイダッシュボード</header>
-<div class="dashboard" id="app"></div>
 
+<header>
+  <div class="logo">
+    <div class="logo-icon">✦</div>
+    <div>
+      <div class="logo-text">マイダッシュボード</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="greeting" id="greeting-text"></span>
+    <button class="refresh-btn" id="sync-btn" onclick="syncChatwork()">
+      <span class="sync-dot"></span> Chatwork 更新
+    </button>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 上段：既存セクション -->
+  <div class="row row-2">
+    <div class="section" id="sec-tools">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon" style="background:linear-gradient(135deg,#FFD6DE,#E8C8FF)">🔗</div>
+          <div>
+            <div class="sec-title">ツールリンク集</div>
+            <div class="sec-sub">よく使うツールをまとめて</div>
+          </div>
+        </div>
+        <button class="add-btn" onclick="openAdd('tool')">＋ 追加</button>
+      </div>
+      <div id="tools-body"></div>
+    </div>
+
+    <div class="section" id="sec-learns">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon" style="background:linear-gradient(135deg,#B5EAD7,#C9E8FF)">📚</div>
+          <div>
+            <div class="sec-title">学習リソース</div>
+            <div class="sec-sub">見たいコンテンツを管理しよ</div>
+          </div>
+        </div>
+        <button class="add-btn" onclick="openAdd('learn')">＋ 追加</button>
+      </div>
+      <div id="learns-body"></div>
+    </div>
+  </div>
+
+  <!-- 下段：Chatworkセクション -->
+  <div class="row row-3">
+    <div class="section" id="sec-todo">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon" style="background:linear-gradient(135deg,#FFB7C5,#FFCF87)">✅</div>
+          <div>
+            <div class="sec-title">やることリスト</div>
+            <div class="sec-sub">上司からのタスクを片づけよ</div>
+          </div>
+        </div>
+      </div>
+      <div id="todo-body"></div>
+      <div class="todo-input-row">
+        <input class="todo-input" id="todo-input" placeholder="タスクを追加…" onkeydown="if(event.key==='Enter')addTodo()" />
+        <button class="todo-add-btn" onclick="addTodo()">追加</button>
+      </div>
+    </div>
+
+    <div class="section" id="sec-minutes">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon" style="background:linear-gradient(135deg,#C9E8FF,#B5EAD7)">📝</div>
+          <div>
+            <div class="sec-title">議事録まとめ</div>
+            <div class="sec-sub">勉強部屋の学びをキャッチ</div>
+          </div>
+        </div>
+      </div>
+      <div id="minutes-body"></div>
+    </div>
+
+    <div class="section" id="sec-thread">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon" style="background:linear-gradient(135deg,#FFF3B0,#FFD6DE)">💬</div>
+          <div>
+            <div class="sec-title">スレッド概要</div>
+            <div class="sec-sub">決まったこと・タスクを確認</div>
+          </div>
+        </div>
+      </div>
+      <div id="thread-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h3 id="modal-title">追加</h3>
@@ -72,61 +454,61 @@ header{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:14px 24px;font-
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
-      <button class="btn-primary" onclick="saveItem()">保存</button>
+      <button class="btn-primary" onclick="saveItem()">保存する ✦</button>
     </div>
   </div>
 </div>
 
 <script>
+/* ── GREETING ── */
+const greet = () => {
+  const h = new Date().getHours();
+  const g = h < 5 ? 'おやすみ 🌙' : h < 10 ? 'おはよう ☀️' : h < 17 ? 'こんにちは 🌸' : h < 21 ? 'おつかれさま ✨' : 'おやすみ 🌙';
+  document.getElementById('greeting-text').textContent = g;
+};
+greet();
+
+/* ── STATE ── */
 const DEFAULTS = {
-  tools: [],
-  toolCats: ['仕事','開発','デザイン'],
-  learns: [],
-  learnCats: ['AI','バックエンド','フロントエンド'],
+  tools:[],toolCats:['仕事','開発','デザイン'],
+  learns:[],learnCats:['AI','バックエンド','フロントエンド'],
+  todos:[
+    {id:1,text:'先週の勉強会の内容をNotionにまとめる',done:false,room:'勉強部屋',priority:'high'},
+    {id:2,text:'Supabaseのドキュメントを読む',done:false,room:'開発連絡',priority:'normal'},
+    {id:3,text:'MCPサーバーのセットアップを試す',done:true,room:'プロジェクト',priority:'normal'},
+  ],
+  minutes:[
+    {id:1,date:'2025/06/12',room:'勉強部屋',title:'Supabase × Gemini API 連携勉強会',body:'Edge FunctionsからGemini APIを呼び出す方法を学んだ。pgvectorを使ったベクトル検索の実装例も紹介。',tags:['Supabase','Gemini','Edge Functions']},
+    {id:2,date:'2025/06/08',room:'勉強部屋',title:'MCPサーバー入門',body:'Model Context ProtocolでClaudeに外部ツールを接続する仕組みを確認。実装はStdioServerTransportを使う。',tags:['MCP','Claude','API']},
+  ],
+  threads:[
+    {id:1,room:'プロジェクトAルーム',time:'本日 14:32',summary:'ダッシュボードv2のリリース方針が決定。GitHub Pagesを使って今週中に公開する。',decisions:['GitHub Pagesで公開','今週金曜リリース'],tasks:['さとみさん：HTMLファイルの最終確認','デプロイ後にチームへ共有']},
+  ],
 };
 
-function load() {
-  try {
-    const saved = localStorage.getItem('dashboard_v1');
-    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULTS));
-  } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
+function load(){
+  try{const s=localStorage.getItem('cw_dash_v2');return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULTS));}
+  catch{return JSON.parse(JSON.stringify(DEFAULTS));}
 }
+function save(){localStorage.setItem('cw_dash_v2',JSON.stringify(state));}
+let state=load();
+let modal={mode:null,section:null,editId:null};
+let dragId=null;
 
-function save() { localStorage.setItem('dashboard_v1', JSON.stringify(state)); }
+/* ── RENDER ALL ── */
+function render(){renderTools();renderLearns();renderTodos();renderMinutes();renderThreads();}
 
-let state = load();
-let modal = {mode:null,section:null,editId:null};
-let dragId = null;
-
-function render() {
-  document.getElementById('app').innerHTML = `
-    <div>
-      <div class="section-header">
-        <span class="section-title">ツールリンク集</span>
-        <button class="add-btn" onclick="openAdd('tool')">+ 追加</button>
-      </div>
-      ${renderToolCats()}
-    </div>
-    <div>
-      <div class="section-header">
-        <span class="section-title">学習リソース</span>
-        <button class="add-btn" onclick="openAdd('learn')">+ 追加</button>
-      </div>
-      ${renderLearnCats()}
-    </div>
-  `;
-}
-
-function renderToolCats() {
-  return state.toolCats.map(cat => {
-    const items = state.tools.filter(t => t.cat === cat);
-    return `<div class="category-block">
+/* ── TOOLS ── */
+function renderTools(){
+  document.getElementById('tools-body').innerHTML = state.toolCats.map(cat=>{
+    const items=state.tools.filter(t=>t.cat===cat);
+    return `<div class="cat-block">
       <div class="cat-label">${cat}
-        <button class="cat-edit-btn" onclick="renameToolCat('${cat}')">編集</button>
+        <button class="cat-edit-btn" onclick="renameToolCat('${cat}')">名前変更</button>
         <button class="cat-edit-btn" onclick="addToolCat()">＋カテゴリ</button>
       </div>
       <div class="cards-grid">
-        ${items.length ? items.map(t => `
+        ${items.length?items.map(t=>`
           <div class="tool-card" onclick="openLink('${t.url}')">
             <div class="tool-card-name">${t.name}</div>
             <div class="tool-card-url">${t.url.replace(/^https?:\/\//,'')}</div>
@@ -134,21 +516,23 @@ function renderToolCats() {
               <button class="action-btn" onclick="event.stopPropagation();openEdit('tool',${t.id})">編集</button>
               <button class="action-btn" onclick="event.stopPropagation();deleteTool(${t.id})">削除</button>
             </div>
-          </div>`).join('') : `<div class="empty">まだありません</div>`}
+          </div>`).join('')
+        :`<div class="empty-state"><div class="empty-icon">🔗</div>まだないよ～</div>`}
       </div>
     </div>`;
   }).join('');
 }
 
-function renderLearnCats() {
-  return state.learnCats.map(cat => {
-    const items = state.learns.filter(l => l.cat === cat);
-    return `<div class="category-block">
+/* ── LEARNS ── */
+function renderLearns(){
+  document.getElementById('learns-body').innerHTML = state.learnCats.map(cat=>{
+    const items=state.learns.filter(l=>l.cat===cat);
+    return `<div class="cat-block">
       <div class="cat-label">${cat}
-        <button class="cat-edit-btn" onclick="renameLearnCat('${cat}')">編集</button>
+        <button class="cat-edit-btn" onclick="renameLearnCat('${cat}')">名前変更</button>
         <button class="cat-edit-btn" onclick="addLearnCat()">＋カテゴリ</button>
       </div>
-      ${items.length ? items.map(l => `
+      ${items.length?items.map(l=>`
         <div class="learn-card" draggable="true"
           ondragstart="dragStart(${l.id})"
           ondragover="event.preventDefault();dragOver(this)"
@@ -158,9 +542,9 @@ function renderLearnCats() {
           <div class="learn-card-top">
             <div class="status-toggle ${l.status}" onclick="toggleStatus(${l.id})"></div>
             <div class="learn-card-info">
-              <div class="learn-card-title" style="${l.status==='watched'?'opacity:.5;text-decoration:line-through':''}">${l.title}</div>
+              <div class="learn-card-title" style="${l.status==='watched'?'opacity:.45;text-decoration:line-through':''}">${l.title}</div>
               <div class="learn-card-url">${l.url.replace(/^https?:\/\//,'')}</div>
-              <span class="learn-badge ${l.status==='watched'?'badge-watched':'badge-unwatched'}">${l.status==='watched'?'視聴済み':'未視聴'}</span>
+              <span class="learn-badge ${l.status==='watched'?'badge-watched':'badge-unwatched'}">${l.status==='watched'?'✓ 視聴済み':'未視聴'}</span>
             </div>
             <div class="lc-actions">
               <button class="action-btn" onclick="openLink('${l.url}')">開く</button>
@@ -168,106 +552,196 @@ function renderLearnCats() {
               <button class="action-btn" onclick="deleteLearn(${l.id})">削除</button>
             </div>
           </div>
-        </div>`).join('') : `<div class="empty">まだありません</div>`}
+        </div>`).join('')
+      :`<div class="empty-state"><div class="empty-icon">📚</div>コンテンツを追加してみよう</div>`}
     </div>`;
   }).join('');
 }
 
-function openLink(url) {
-  if (!url.startsWith('http')) url = 'https://' + url;
-  window.open(url, '_blank');
-}
-
-function openAdd(section) {
-  modal = {mode:'add', section, editId:null};
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-url').value = '';
-  const cats = section === 'tool' ? state.toolCats : state.learnCats;
-  document.getElementById('f-cat').innerHTML = cats.map(c => `<option>${c}</option>`).join('');
-  document.getElementById('f-status-row').style.display = section === 'learn' ? 'block' : 'none';
-  document.getElementById('modal-title').textContent = section === 'tool' ? 'ツールを追加' : '学習リソースを追加';
-  document.getElementById('modal').classList.add('open');
-}
-
-function openEdit(section, id) {
-  modal = {mode:'edit', section, editId:id};
-  const item = section === 'tool' ? state.tools.find(t => t.id === id) : state.learns.find(l => l.id === id);
-  document.getElementById('f-name').value = item.name || item.title;
-  document.getElementById('f-url').value = item.url;
-  const cats = section === 'tool' ? state.toolCats : state.learnCats;
-  document.getElementById('f-cat').innerHTML = cats.map(c => `<option${c === item.cat ? ' selected' : ''}>${c}</option>`).join('');
-  document.getElementById('f-status-row').style.display = section === 'learn' ? 'block' : 'none';
-  if (section === 'learn') document.getElementById('f-status').value = item.status;
-  document.getElementById('modal-title').textContent = section === 'tool' ? 'ツールを編集' : 'リソースを編集';
-  document.getElementById('modal').classList.add('open');
-}
-
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-
-function saveItem() {
-  const name = document.getElementById('f-name').value.trim();
-  const url = document.getElementById('f-url').value.trim();
-  const cat = document.getElementById('f-cat').value;
-  if (!name || !url) return;
-  if (modal.section === 'tool') {
-    if (modal.mode === 'add') state.tools.push({id:Date.now(), name, url, cat});
-    else { const t = state.tools.find(t => t.id === modal.editId); t.name=name; t.url=url; t.cat=cat; }
-  } else {
-    const status = document.getElementById('f-status').value;
-    if (modal.mode === 'add') state.learns.push({id:Date.now(), title:name, url, cat, status});
-    else { const l = state.learns.find(l => l.id === modal.editId); l.title=name; l.url=url; l.cat=cat; l.status=status; }
+/* ── TODOS ── */
+function renderTodos(){
+  const open=state.todos.filter(t=>!t.done);
+  const done=state.todos.filter(t=>t.done);
+  let html='';
+  if(open.length===0&&done.length===0){
+    html=`<div class="empty-state"><div class="empty-icon">🎉</div>全部終わった！えらい！</div>`;
+  }else{
+    html+=open.map(t=>todoCard(t)).join('');
+    if(done.length>0){
+      html+=`<div class="cat-label" style="margin:10px 0 6px">完了済み ✓</div>`;
+      html+=done.map(t=>todoCard(t)).join('');
+    }
   }
-  save(); closeModal(); render();
+  document.getElementById('todo-body').innerHTML=html;
+}
+function todoCard(t){
+  return `<div class="todo-item">
+    <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo(${t.id})"></div>
+    <div class="todo-content">
+      <div class="todo-text ${t.done?'done-text':''}">${t.text}</div>
+      <div class="todo-meta">
+        <span class="todo-room">${t.room||'Chatwork'}</span>
+        ${t.priority==='high'?`<span class="todo-priority pri-high">急ぎ</span>`:`<span class="todo-priority pri-normal">通常</span>`}
+      </div>
+    </div>
+    <button class="todo-del-btn" onclick="deleteTodo(${t.id})">削除</button>
+  </div>`;
+}
+function addTodo(){
+  const v=document.getElementById('todo-input').value.trim();
+  if(!v)return;
+  state.todos.unshift({id:Date.now(),text:v,done:false,room:'手動追加',priority:'normal'});
+  document.getElementById('todo-input').value='';
+  save();renderTodos();
+}
+function toggleTodo(id){
+  const t=state.todos.find(t=>t.id===id);
+  t.done=!t.done;save();renderTodos();
+}
+function deleteTodo(id){
+  state.todos=state.todos.filter(t=>t.id!==id);save();renderTodos();
 }
 
-function deleteTool(id) { state.tools = state.tools.filter(t => t.id !== id); save(); render(); }
-function deleteLearn(id) { state.learns = state.learns.filter(l => l.id !== id); save(); render(); }
-
-function toggleStatus(id) {
-  const l = state.learns.find(l => l.id === id);
-  l.status = l.status === 'watched' ? 'unwatched' : 'watched';
-  save(); render();
+/* ── MINUTES ── */
+function renderMinutes(){
+  const el=document.getElementById('minutes-body');
+  if(!state.minutes.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📝</div>議事録はここに届くよ</div>`;
+    return;
+  }
+  el.innerHTML=state.minutes.map(m=>`
+    <div class="minutes-card">
+      <div class="minutes-head">
+        <span class="minutes-date">${m.date}</span>
+        <span class="minutes-room">${m.room}</span>
+      </div>
+      <div class="minutes-title">${m.title}</div>
+      <div class="minutes-body">${m.body}</div>
+      <div class="minutes-tags">${(m.tags||[]).map(tag=>`<span class="minutes-tag">#${tag}</span>`).join('')}</div>
+      <button class="notion-btn" onclick="openLink('https://notion.so')">📋 Notionで開く</button>
+    </div>`).join('');
 }
 
-function renameToolCat(old) {
-  const n = prompt('カテゴリ名を変更:', old);
-  if (!n || n === old) return;
-  state.toolCats = state.toolCats.map(c => c === old ? n : c);
-  state.tools.forEach(t => { if (t.cat === old) t.cat = n; });
-  save(); render();
+/* ── THREADS ── */
+function renderThreads(){
+  const el=document.getElementById('thread-body');
+  if(!state.threads.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">💬</div>スレッドの概要がここに届くよ</div>`;
+    return;
+  }
+  el.innerHTML=state.threads.map(t=>`
+    <div class="thread-card">
+      <div class="thread-head">
+        <span class="thread-room">${t.room}</span>
+        <span class="thread-time">${t.time}</span>
+      </div>
+      <div class="thread-summary">${t.summary}</div>
+      ${t.decisions?.length?`
+        <div class="thread-section-label">✦ 決まったこと</div>
+        <ul class="thread-items">${t.decisions.map(d=>`<li>${d}</li>`).join('')}</ul>`:''}
+      ${t.tasks?.length?`
+        <div class="thread-section-label">📌 タスク</div>
+        <ul class="thread-items">${t.tasks.map(t=>`<li>${t}</li>`).join('')}</ul>`:''}
+    </div>`).join('');
 }
 
-function renameLearnCat(old) {
-  const n = prompt('カテゴリ名を変更:', old);
-  if (!n || n === old) return;
-  state.learnCats = state.learnCats.map(c => c === old ? n : c);
-  state.learns.forEach(l => { if (l.cat === old) l.cat = n; });
-  save(); render();
+/* ── CHATWORK SYNC (stub) ── */
+function syncChatwork(){
+  const btn=document.getElementById('sync-btn');
+  btn.textContent='同期中…';
+  btn.disabled=true;
+  setTimeout(()=>{
+    btn.innerHTML='<span class="sync-dot"></span> Chatwork 更新';
+    btn.classList.add('synced');
+    btn.disabled=false;
+    setTimeout(()=>btn.classList.remove('synced'),3000);
+    // 実際はここでMCPサーバーのAPIを呼ぶ
+    alert('✦ MCPサーバーを接続すると、ここに自動でChatworkのデータが反映されます！');
+  },1200);
 }
 
-function addToolCat() {
-  const n = prompt('新しいカテゴリ名:');
-  if (!n) return;
-  state.toolCats.push(n); save(); render();
+/* ── MODAL HELPERS ── */
+function openLink(url){if(!url.startsWith('http'))url='https://'+url;window.open(url,'_blank');}
+function openAdd(section){
+  modal={mode:'add',section,editId:null};
+  document.getElementById('f-name').value='';
+  document.getElementById('f-url').value='';
+  const cats=section==='tool'?state.toolCats:state.learnCats;
+  document.getElementById('f-cat').innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('f-status-row').style.display=section==='learn'?'block':'none';
+  document.getElementById('modal-title').textContent=section==='tool'?'🔗 ツールを追加':'📚 学習リソースを追加';
+  document.getElementById('modal').classList.add('open');
+}
+function openEdit(section,id){
+  modal={mode:'edit',section,editId:id};
+  const item=section==='tool'?state.tools.find(t=>t.id===id):state.learns.find(l=>l.id===id);
+  document.getElementById('f-name').value=item.name||item.title;
+  document.getElementById('f-url').value=item.url;
+  const cats=section==='tool'?state.toolCats:state.learnCats;
+  document.getElementById('f-cat').innerHTML=cats.map(c=>`<option${c===item.cat?' selected':''}>${c}</option>`).join('');
+  document.getElementById('f-status-row').style.display=section==='learn'?'block':'none';
+  if(section==='learn')document.getElementById('f-status').value=item.status;
+  document.getElementById('modal-title').textContent=section==='tool'?'🔗 ツールを編集':'📚 リソースを編集';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function saveItem(){
+  const name=document.getElementById('f-name').value.trim();
+  const url=document.getElementById('f-url').value.trim();
+  const cat=document.getElementById('f-cat').value;
+  if(!name||!url)return;
+  if(modal.section==='tool'){
+    if(modal.mode==='add')state.tools.push({id:Date.now(),name,url,cat});
+    else{const t=state.tools.find(t=>t.id===modal.editId);t.name=name;t.url=url;t.cat=cat;}
+  }else{
+    const status=document.getElementById('f-status').value;
+    if(modal.mode==='add')state.learns.push({id:Date.now(),title:name,url,cat,status});
+    else{const l=state.learns.find(l=>l.id===modal.editId);l.title=name;l.url=url;l.cat=cat;l.status=status;}
+  }
+  save();closeModal();render();
 }
 
-function addLearnCat() {
-  const n = prompt('新しいカテゴリ名:');
-  if (!n) return;
-  state.learnCats.push(n); save(); render();
+/* ── CATEGORY MANAGEMENT ── */
+function deleteTool(id){state.tools=state.tools.filter(t=>t.id!==id);save();renderTools();}
+function deleteLearn(id){state.learns=state.learns.filter(l=>l.id!==id);save();renderLearns();}
+function toggleStatus(id){
+  const l=state.learns.find(l=>l.id===id);
+  l.status=l.status==='watched'?'unwatched':'watched';
+  save();renderLearns();
+}
+function renameToolCat(old){
+  const n=prompt('カテゴリ名を変更:',old);if(!n||n===old)return;
+  state.toolCats=state.toolCats.map(c=>c===old?n:c);
+  state.tools.forEach(t=>{if(t.cat===old)t.cat=n;});
+  save();renderTools();
+}
+function renameLearnCat(old){
+  const n=prompt('カテゴリ名を変更:',old);if(!n||n===old)return;
+  state.learnCats=state.learnCats.map(c=>c===old?n:c);
+  state.learns.forEach(l=>{if(l.cat===old)l.cat=n;});
+  save();renderLearns();
+}
+function addToolCat(){
+  const n=prompt('新しいカテゴリ名:');if(!n)return;
+  state.toolCats.push(n);save();renderTools();
+}
+function addLearnCat(){
+  const n=prompt('新しいカテゴリ名:');if(!n)return;
+  state.learnCats.push(n);save();renderLearns();
 }
 
-function dragStart(id) { dragId = id; }
-function dragOver(el) { el.classList.add('drag-over'); }
-function dragLeave(el) { el.classList.remove('drag-over'); }
-function dragEnd(el) { el.classList.remove('drag-over'); }
-function drop(targetId) {
-  if (dragId === targetId) return;
-  const from = state.learns.findIndex(l => l.id === dragId);
-  const to = state.learns.findIndex(l => l.id === targetId);
-  const [item] = state.learns.splice(from, 1);
-  state.learns.splice(to, 0, item);
-  dragId = null; save(); render();
+/* ── DRAG & DROP ── */
+function dragStart(id){dragId=id;}
+function dragOver(el){el.classList.add('drag-over');}
+function dragLeave(el){el.classList.remove('drag-over');}
+function dragEnd(el){el.classList.remove('drag-over');}
+function drop(targetId){
+  if(dragId===targetId)return;
+  const from=state.learns.findIndex(l=>l.id===dragId);
+  const to=state.learns.findIndex(l=>l.id===targetId);
+  const [item]=state.learns.splice(from,1);
+  state.learns.splice(to,0,item);
+  dragId=null;save();renderLearns();
 }
 
 render();
