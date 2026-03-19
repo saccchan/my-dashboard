@@ -22,4 +22,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet || git commit -m "🤖 Chatwork自動更新 $(date +'%Y-%m-%d %H:%M')"
-          git push
+          git push --force-with-lease
