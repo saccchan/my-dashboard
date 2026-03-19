@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マイダッシュボード</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh}
+header{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:14px 24px;font-size:16px;font-weight:500}
+.dashboard{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px;max-width:1200px;margin:0 auto}
+@media(max-width:700px){.dashboard{grid-template-columns:1fr}}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:15px;font-weight:500}
+.add-btn{font-size:12px;padding:4px 12px;cursor:pointer;border-radius:8px;border:0.5px solid #ccc;background:transparent;color:#555}
+.add-btn:hover{background:#f0f0f0}
+.category-block{margin-bottom:18px}
+.cat-label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.cat-edit-btn{font-size:10px;padding:2px 6px;cursor:pointer;border-radius:4px;border:0.5px solid #ddd;background:transparent;color:#aaa}
+.cat-edit-btn:hover{background:#f0f0f0}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.tool-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:8px;padding:10px 12px;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px}
+.tool-card:hover{border-color:#bbb}
+.tool-card-name{font-size:13px;font-weight:500}
+.tool-card-url{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-actions{display:none;position:absolute;top:4px;right:4px;gap:4px}
+.tool-card:hover .card-actions{display:flex}
+.action-btn{font-size:10px;padding:2px 5px;cursor:pointer;border-radius:4px;border:0.5px solid #ddd;background:#fff;color:#666}
+.action-btn:hover{background:#f0f0f0}
+.learn-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:grab}
+.learn-card:hover{border-color:#bbb}
+.learn-card.drag-over{border-color:#378ADD}
+.learn-card-top{display:flex;align-items:flex-start;gap:8px}
+.status-toggle{width:16px;height:16px;border-radius:50%;border:1.5px solid #ccc;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center}
+.status-toggle.watched{background:#1D9E75;border-color:#1D9E75}
+.status-toggle.watched::after{content:'';display:block;width:5px;height:8px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
+.learn-card-info{flex:1;min-width:0}
+.learn-card-title{font-size:13px;font-weight:500}
+.learn-card-url{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.learn-badge{font-size:10px;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:4px}
+.badge-watched{background:#E1F5EE;color:#0F6E56}
+.badge-unwatched{background:#f1efe8;color:#666}
+.lc-actions{display:flex;gap:4px;flex-shrink:0}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:100}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;padding:1.25rem;width:320px;max-width:90vw}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:14px}
+.modal label{font-size:12px;color:#666;display:block;margin-bottom:4px;margin-top:10px}
+.modal input,.modal select{width:100%;padding:6px 8px;font-size:13px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.modal-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.btn-primary{padding:6px 14px;font-size:13px;cursor:pointer;border-radius:8px;border:none;background:#378ADD;color:white}
+.btn-cancel{padding:6px 14px;font-size:13px;cursor:pointer;border-radius:8px;border:0.5px solid #ccc;background:transparent;color:#666}
+.empty{font-size:12px;color:#bbb;padding:8px 0}
+</style>
+</head>
+<body>
+<header>マイダッシュボード</header>
+<div class="dashboard" id="app"></div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">追加</h3>
+    <label>名前</label>
+    <input id="f-name" placeholder="例：Notion" />
+    <label>URL</label>
+    <input id="f-url" placeholder="https://..." />
+    <label>カテゴリ</label>
+    <select id="f-cat"></select>
+    <div id="f-status-row" style="display:none">
+      <label>ステータス</label>
+      <select id="f-status"><option value="unwatched">未視聴</option><option value="watched">視聴済み</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULTS = {
+  tools: [],
+  toolCats: ['仕事','開発','デザイン'],
+  learns: [],
+  learnCats: ['AI','バックエンド','フロントエンド'],
+};
+
+function load() {
+  try {
+    const saved = localStorage.getItem('dashboard_v1');
+    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULTS));
+  } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
+}
+
+function save() { localStorage.setItem('dashboard_v1', JSON.stringify(state)); }
+
+let state = load();
+let modal = {mode:null,section:null,editId:null};
+let dragId = null;
+
+function render() {
+  document.getElementById('app').innerHTML = `
+    <div>
+      <div class="section-header">
+        <span class="section-title">ツールリンク集</span>
+        <button class="add-btn" onclick="openAdd('tool')">+ 追加</button>
+      </div>
+      ${renderToolCats()}
+    </div>
+    <div>
+      <div class="section-header">
+        <span class="section-title">学習リソース</span>
+        <button class="add-btn" onclick="openAdd('learn')">+ 追加</button>
+      </div>
+      ${renderLearnCats()}
+    </div>
+  `;
+}
+
+function renderToolCats() {
+  return state.toolCats.map(cat => {
+    const items = state.tools.filter(t => t.cat === cat);
+    return `<div class="category-block">
+      <div class="cat-label">${cat}
+        <button class="cat-edit-btn" onclick="renameToolCat('${cat}')">編集</button>
+        <button class="cat-edit-btn" onclick="addToolCat()">＋カテゴリ</button>
+      </div>
+      <div class="cards-grid">
+        ${items.length ? items.map(t => `
+          <div class="tool-card" onclick="openLink('${t.url}')">
+            <div class="tool-card-name">${t.name}</div>
+            <div class="tool-card-url">${t.url.replace(/^https?:\/\//,'')}</div>
+            <div class="card-actions">
+              <button class="action-btn" onclick="event.stopPropagation();openEdit('tool',${t.id})">編集</button>
+              <button class="action-btn" onclick="event.stopPropagation();deleteTool(${t.id})">削除</button>
+            </div>
+          </div>`).join('') : `<div class="empty">まだありません</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderLearnCats() {
+  return state.learnCats.map(cat => {
+    const items = state.learns.filter(l => l.cat === cat);
+    return `<div class="category-block">
+      <div class="cat-label">${cat}
+        <button class="cat-edit-btn" onclick="renameLearnCat('${cat}')">編集</button>
+        <button class="cat-edit-btn" onclick="addLearnCat()">＋カテゴリ</button>
+      </div>
+      ${items.length ? items.map(l => `
+        <div class="learn-card" draggable="true"
+          ondragstart="dragStart(${l.id})"
+          ondragover="event.preventDefault();dragOver(this)"
+          ondragleave="dragLeave(this)"
+          ondrop="drop(${l.id})"
+          ondragend="dragEnd(this)">
+          <div class="learn-card-top">
+            <div class="status-toggle ${l.status}" onclick="toggleStatus(${l.id})"></div>
+            <div class="learn-card-info">
+              <div class="learn-card-title" style="${l.status==='watched'?'opacity:.5;text-decoration:line-through':''}">${l.title}</div>
+              <div class="learn-card-url">${l.url.replace(/^https?:\/\//,'')}</div>
+              <span class="learn-badge ${l.status==='watched'?'badge-watched':'badge-unwatched'}">${l.status==='watched'?'視聴済み':'未視聴'}</span>
+            </div>
+            <div class="lc-actions">
+              <button class="action-btn" onclick="openLink('${l.url}')">開く</button>
+              <button class="action-btn" onclick="openEdit('learn',${l.id})">編集</button>
+              <button class="action-btn" onclick="deleteLearn(${l.id})">削除</button>
+            </div>
+          </div>
+        </div>`).join('') : `<div class="empty">まだありません</div>`}
+    </div>`;
+  }).join('');
+}
+
+function openLink(url) {
+  if (!url.startsWith('http')) url = 'https://' + url;
+  window.open(url, '_blank');
+}
+
+function openAdd(section) {
+  modal = {mode:'add', section, editId:null};
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-url').value = '';
+  const cats = section === 'tool' ? state.toolCats : state.learnCats;
+  document.getElementById('f-cat').innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+  document.getElementById('f-status-row').style.display = section === 'learn' ? 'block' : 'none';
+  document.getElementById('modal-title').textContent = section === 'tool' ? 'ツールを追加' : '学習リソースを追加';
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEdit(section, id) {
+  modal = {mode:'edit', section, editId:id};
+  const item = section === 'tool' ? state.tools.find(t => t.id === id) : state.learns.find(l => l.id === id);
+  document.getElementById('f-name').value = item.name || item.title;
+  document.getElementById('f-url').value = item.url;
+  const cats = section === 'tool' ? state.toolCats : state.learnCats;
+  document.getElementById('f-cat').innerHTML = cats.map(c => `<option${c === item.cat ? ' selected' : ''}>${c}</option>`).join('');
+  document.getElementById('f-status-row').style.display = section === 'learn' ? 'block' : 'none';
+  if (section === 'learn') document.getElementById('f-status').value = item.status;
+  document.getElementById('modal-title').textContent = section === 'tool' ? 'ツールを編集' : 'リソースを編集';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function saveItem() {
+  const name = document.getElementById('f-name').value.trim();
+  const url = document.getElementById('f-url').value.trim();
+  const cat = document.getElementById('f-cat').value;
+  if (!name || !url) return;
+  if (modal.section === 'tool') {
+    if (modal.mode === 'add') state.tools.push({id:Date.now(), name, url, cat});
+    else { const t = state.tools.find(t => t.id === modal.editId); t.name=name; t.url=url; t.cat=cat; }
+  } else {
+    const status = document.getElementById('f-status').value;
+    if (modal.mode === 'add') state.learns.push({id:Date.now(), title:name, url, cat, status});
+    else { const l = state.learns.find(l => l.id === modal.editId); l.title=name; l.url=url; l.cat=cat; l.status=status; }
+  }
+  save(); closeModal(); render();
+}
+
+function deleteTool(id) { state.tools = state.tools.filter(t => t.id !== id); save(); render(); }
+function deleteLearn(id) { state.learns = state.learns.filter(l => l.id !== id); save(); render(); }
+
+function toggleStatus(id) {
+  const l = state.learns.find(l => l.id === id);
+  l.status = l.status === 'watched' ? 'unwatched' : 'watched';
+  save(); render();
+}
+
+function renameToolCat(old) {
+  const n = prompt('カテゴリ名を変更:', old);
+  if (!n || n === old) return;
+  state.toolCats = state.toolCats.map(c => c === old ? n : c);
+  state.tools.forEach(t => { if (t.cat === old) t.cat = n; });
+  save(); render();
+}
+
+function renameLearnCat(old) {
+  const n = prompt('カテゴリ名を変更:', old);
+  if (!n || n === old) return;
+  state.learnCats = state.learnCats.map(c => c === old ? n : c);
+  state.learns.forEach(l => { if (l.cat === old) l.cat = n; });
+  save(); render();
+}
+
+function addToolCat() {
+  const n = prompt('新しいカテゴリ名:');
+  if (!n) return;
+  state.toolCats.push(n); save(); render();
+}
+
+function addLearnCat() {
+  const n = prompt('新しいカテゴリ名:');
+  if (!n) return;
+  state.learnCats.push(n); save(); render();
+}
+
+function dragStart(id) { dragId = id; }
+function dragOver(el) { el.classList.add('drag-over'); }
+function dragLeave(el) { el.classList.remove('drag-over'); }
+function dragEnd(el) { el.classList.remove('drag-over'); }
+function drop(targetId) {
+  if (dragId === targetId) return;
+  const from = state.learns.findIndex(l => l.id === dragId);
+  const to = state.learns.findIndex(l => l.id === targetId);
+  const [item] = state.learns.splice(from, 1);
+  state.learns.splice(to, 0, item);
+  dragId = null; save(); render();
+}
+
+render();
+</script>
+</body>
+</html>
