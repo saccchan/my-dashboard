@@ -10,11 +10,12 @@ const ROOMS = {
 
 function cw(path) {
   return new Promise(function(resolve, reject) {
-    var req = https.request({
+    var options = {
       hostname: 'api.chatwork.com',
       path: '/v2' + path,
       headers: { 'X-ChatWorkToken': process.env.CHATWORK_API_KEY }
-    }, function(res) {
+    };
+    var req = https.request(options, function(res) {
       var d = '';
       res.on('data', function(chunk) { d += chunk; });
       res.on('end', function() { resolve(JSON.parse(d)); });
@@ -35,13 +36,13 @@ async function main() {
     var id = ROOMS[name];
 
     try {
-      var tasks = await cw('/rooms/' + id + '/task
+      var tasks = await cw('/rooms/' + id + '/tasks?status=open');
+      if (Array.isArray(tasks)) {
         for (var j = 0; j < Math.min(tasks.length, 10); j++) {
-          var t = tasks[j];
           todos.push({
-            id: t.task_id,
+            id: tasks[j].task_id,
             room_id: id,
-            text: t.body,
+            text: tasks[j].body,
             room: name,
             priority: 'normal',
             done: false
@@ -61,13 +62,13 @@ async function main() {
           var links = [];
           for (var k = 0; k < recent.length; k++) {
             var m = recent[k];
-            var matches = m.body.match(/https:\/\/www\.notion\.so\/[^\s\)"]+/g);
+            var matches = m.body.match(/https:\/\/www\.notion\.so\/[^\s)\"]+/g);
             if (matches) {
               for (var l = 0; l < matches.length; l++) {
                 links.push({
                   url: matches[l],
                   sender: m.account.name,
-                  date: new Date(m.send_time * 1000).toLocaleDateString('ja-JP', {timeZone: 'Asia/Tokyo'})
+                  date: new Date(m.send_time * 1000).toLocaleDateString('ja-JP')
                 });
               }
             }
@@ -77,7 +78,7 @@ async function main() {
               id: Date.now(),
               room: name,
               links: links,
-              date: new Date().toLocaleDateString('ja-JP', {timeZone: 'Asia/Tokyo'}),
+              date: new Date().toLocaleDateString('ja-JP'),
               title: 'Cursor勉強部屋 学習リンク',
               body: links.length + '件のNotionリンクが共有されています',
               tags: ['Notion', '学習']
@@ -94,15 +95,25 @@ async function main() {
         threads.push({
           id: parseInt(id),
           room: name,
-          time: '更新: ' + new Date().toLocaleString('ja-JP', {timeZone: 'Asia/Tokyo'}),
+          time: '更新: ' + new Date().toLocaleString('ja-JP'),
           summary: '最新' + recent.length + '件のメッセージ',
           decisions: [],
- sole.error('msgs error:', name, e.message);
+          tasks: roomTasks
+        });
+      }
+    } catch(e) {
+      console.error('msgs error:', name, e.message);
     }
   }
 
-  var updatedAt = new Date().toLocaleString('ja-JP', {timeZone: 'Asia/Tokyo'});
-  var block = '<!-- CW_AUTO_START -->\n<script id="cw-data">\nwindow.CW_TODOS=' + JSON.stringify(todos) + ';\nwindow.CW_THREADS=' + JSON.stringify(threads) + ';\nwindow.CW_MINUTES=' + JSON.stringify(minutes) + ';\nwindow.CW_UPDATED="' + updatedAt + '";\n<\/script>\n<!-- CW_AUTO_END -->';
+  var updatedAt = new Date().toLocaleString('ja-JP');
+  var inject = '<script id="cw-data">' +
+    'window.CW_TODOS=' + JSON.stringify(todos) + ';' +
+    'window.CW_THREADS=' + JSON.stringify(threads) + ';' +
+    'window.CW_MINUTES=' + JSON.stringify(minutes) + ';' +
+    'window.CW_UPDATED="' + updatedAt + '";' +
+    '<\/script>';
+  var block = '<!-- CW_AUTO_START -->\n' + inject + '\n<!-- CW_AUTO_END -->';
 
   var html = fs.readFileSync('index.html', 'utf8');
   if (html.includes('<!-- CW_AUTO_START -->')) {
