@@ -609,9 +609,19 @@ function deleteTodo(id){
 function renderMinutes(){
   const el=document.getElementById('minutes-body');
   if(!state.minutes.length){
-    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📝</div>議事録はここに届くよ</div>`;
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>議事録はここに届くよ</div>';
     return;
   }
+  el.innerHTML=state.minutes.map(function(m){
+    var linksHtml='';
+    if(m.links&&m.links.length){
+      linksHtml='<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">'+m.links.map(function(l){
+        var t=(l.body||l.url).substring(0,50);
+        return '<button class="notion-btn" style="text-align:left;width:100%" onclick="openLink(''+l.url+'')">📋 ['+l.date+'] '+t+'</button>';
+      }).join('')+'</div>';
+ ass="minutes-card"><div class="minutes-head"><span class="minutes-date">'+m.date+'</span><span class="minutes-room">'+m.room+'</span></div><div class="minutes-title">'+m.title+'</div><div class="minutes-body">'+m.body+'</div><div class="minutes-tags">'+(m.tags||[]).map(function(t){return '<span class="minutes-tag">#'+t+'</span>';}).join('')+'</div>'+linksHtml+'</div>';
+  }).join('');
+}
   el.innerHTML=state.minutes.map(m=>`
     <div class="minutes-card">
       <div class="minutes-head">
