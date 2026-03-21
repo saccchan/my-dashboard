@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+<script src="cw-data.js"></script>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -495,6 +496,9 @@ function load(){
 }
 function save(){localStorage.setItem('cw_dash_v2',JSON.stringify(state));}
 let state=load();
+if(window.CW_TODOS&&window.CW_TODOS.length){state.todos=window.CW_TODOS;}
+if(window.CW_THREADS&&window.CW_THREADS.length){state.threads=window.CW_THREADS;}
+if(window.CW_MINUTES&&window.CW_MINUTES.length){state.minutes=window.CW_MINUTES;}
 let modal={mode:null,section:null,editId:null};
 let dragId=null;
 
@@ -607,6 +611,22 @@ function deleteTodo(id){
 
 /* ── MINUTES ── */
 function renderMinutes(){
+  const el=document.getElementById('minutes-body');
+  if(!state.minutes||!state.minutes.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>議事録はここに届くよ</div>';
+    return;
+  }
+  el.innerHTML=state.minutes.map(function(m){
+    var linksHtml='';
+    if(m.links&&m.links.length){
+      linksHtml='<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">'+m.links.map(function(l){
+        var t=(l.body||l.url).substring(0,45);
+        return '<button class="notion-btn" style="text-align:left;width:100%;font-size:11px" onclick="openLink(\''+l.url+'\')">📋 '+t+'</button>';
+      }).join('')+'</div>';
+    }
+    return '<div class="minutes-card"><div class="minutes-head"><span class="minutes-date">'+m.date+'</span><span class="minutes-room">'+m.room+'</span></div><div class="minutes-title">'+m.title+'</div><div class="minutes-body">'+m.body+'</div><div class="minutes-tags">'+(m.tags||[]).map(function(t){return '<span class="minutes-tag">#'+t+'</span>';}).join('')+'</div>'+linksHtml+'</div>';
+  }).join('');
+}
   const el=document.getElementById('minutes-body');
   if(!state.minutes.length){
     el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>議事録はここに届くよ</div>';

@@ -85,7 +85,7 @@ async function main() {
           var seenUrls = {};
           for (var k = 0; k < recent.length; k++) {
             var m = recent[k];
-            var matches = m.body.match(/https:\/\/[\w-]+\.notion\.site\/[^\s<)]+|https:\/\/www\.notion\.so\/[^\s<)]+/g);
+            var matches = m.body.match(/https:\/\/www\.notion\.so\/[^\s)\"<\]]+/g);
             if (matches) {
               for (var l = 0; l < matches.length; l++) {
                 var url = matches[l].replace(/[.,;]+$/, '');
